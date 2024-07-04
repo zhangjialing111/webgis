@@ -1,0 +1,244 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>导航路线规划</title>
+    <style type="text/css">
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+
+        a {
+            text-decoration: none;
+            color: black;
+        }
+
+        #l-map,
+        .l-search {
+            float: left;
+            height: 100%;
+        }
+
+        #l-map {
+            width: 75%;
+        }
+
+        .l-search {
+            width: 25%;
+        }
+
+        .ls-top {
+            width: 100%;
+            height: 10%;
+        }
+
+        .ls-down {
+            width: 100%;
+            height: 90%;
+        }
+
+        .lst-t,
+        .lst-d {
+            width: 100%;
+            height: 50%;
+        }
+
+        .lst-t>div {
+            height: 100%;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .lst-d>a {
+            display: inline-block;
+            width: 48%;
+            text-align: center;
+            font-weight: 900;
+            border: 2px solid black;
+        }
+
+        #r-result,
+        #r-result table {
+            height: 100%;
+            width: 100%;
+            overflow: scroll;
+        }
+
+        #r-result2,
+        #r-result2 table {
+            height: 100%;
+            width: 100%;
+            overflow: scroll;
+        }
+
+        #r-result2 {
+            display: none;
+        }
+
+        .transformation{
+    cursor: pointer;
+        }
+/* 转换按钮 */
+    </style>
+
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=nSxiPohfziUaCuONe4ViUP2N"></script>
+    <title>驾车导航的结果面板</title>
+</head>
+
+<body>
+    <div class="l-search">
+        <div class="ls-top">
+            <div class="lst-t">
+                <div>
+                    <span id="s-or-e" class="start">起点：</span>
+                    <input type="text" id="keyword">
+                    <button>搜索</button>
+                    <span class="transformation">转换</span>
+                </div>
+            </div>
+            <div class="lst-d">
+                <a href="#" id="transit">公共交通路线</a>
+                <a href="#" id="driving">自主驾车路线</a>
+            </div>
+        </div>
+        <div class="ls-down">
+            <div id="r-result"></div>
+            <div id="r-result2"></div>
+        </div>
+    </div>
+    <div id="l-map"></div>
+</body>
+
+</html>
+<script type="text/javascript">
+    // 百度地图API功能
+    var map = new BMap.Map("l-map");
+
+    var position = [103.730911, 36.111363];
+    map.centerAndZoom(new BMap.Point(position[0], position[1]), 14); // 设置地图中心为止，以及缩放程度
+    map.enableScrollWheelZoom(true); //开启鼠标滚轮缩放
+
+    map.addControl(new BMap.ScaleControl());//添加比例尺
+    map.addControl(new BMap.NavigationControl());//添加平移缩放控件
+    map.addControl(new BMap.OverviewMapControl());//添加缩略地图
+    map.addControl(new BMap.MapTypeControl());//添加地图类型
+    map.addControl(new BMap.CityListControl());//添加城市列表
+     
+
+    var driving = new BMap.DrivingRoute(map, {
+        renderOptions: {
+            map: map,
+            panel: "r-result",
+            autoViewport: false,
+            selectFirstResult: true,
+            highlightMode: BMAP_HIGHLIGHT_ROUTE
+        }
+    }); // 自主驾车路线
+
+    var transit = new BMap.TransitRoute(map, {
+        renderOptions: {
+            map: map,
+            panel: "r-result2"
+        }
+    }); // 公共交通路线
+
+    var button = document.querySelector('button');
+    var keyword = document.querySelector('#keyword');
+    var transit1 = document.querySelector('#transit');
+    var driving1 = document.querySelector('#driving');
+    var a_s = document.querySelectorAll('.lst-d >a');
+    var result1 = document.querySelector('#r-result');
+    var result2 = document.querySelector('#r-result2');
+
+    var s_or_e = document.querySelector("#s-or-e");
+// 起点或者终点
+var re_color = function() {
+    a_s.forEach(function(ele, index) {
+        ele.style.color = 'black';
+    });
+}
+
+var start_destination = '兰州交通大学';
+
+button.onclick = function() {
+    let v = keyword.value;
+    let class_name = s_or_e.className;
+    if (v != '') {
+        transit.clearResults();
+        driving.clearResults();
+        if (class_name == 'start') {
+            transit.search(v, start_destination);
+        } else {
+            transit.search(start_destination, v);
+        }
+        re_color();
+        transit1.style.color = 'red';
+        result1.style.display = 'none';
+        result2.style.display = 'block';
+        map.setZoom(14);
+        map.setCenter(start_destination);
+    } else {
+        alert(`请输入{class_name=='start'?'起点':'终点'}！😊`);
+    }
+}
+
+transit1.onclick = function() {
+    let v = keyword.value;
+    let class_name = s_or_e.className;
+    if (v != '') {
+        driving.clearResults();
+        transit.clearResults();
+        re_color();
+        if (class_name == 'start') {
+            transit.search(v, start_destination);
+        } else {
+            transit.search(start_destination, v);
+        }
+        transit1.style.color = 'red';
+        result1.style.display = 'none';
+        result2.style.display = 'block';
+        map.setZoom(14);
+        map.setCenter(start_destination);
+    } else {
+        alert(`请输入{class_name=='start'?'起点':'终点'}！😊`);
+    }
+}
+
+driving1.onclick = function() {
+    let v = keyword.value;
+    let class_name = s_or_e.className;
+    if (v != '') {
+        driving.clearResults();
+        transit.clearResults();
+        if (class_name == 'start') {
+            driving.search(v, start_destination);
+        } else {
+            driving.search(start_destination, v);
+        }
+        re_color();
+        driving1.style.color = 'red';
+        result1.style.display = 'block';
+        result2.style.display = 'none';
+        map.setZoom(8);
+    } else {
+        alert(`请输入{class_name=='start'?'起点':'终点'}！😊`);
+    }
+}
+
+var trans_btn = document.querySelector(".transformation");
+// 转换按钮
+trans_btn.onclick = function() {
+    if (s_or_e.className == 'start') {
+        s_or_e.innerText = '终点：'
+        s_or_e.className = 'end';
+    } else if (s_or_e.className == 'end') {
+        s_or_e.innerText = '起点：';
+        s_or_e.className = 'start';
+    }
+}
+</script>
